@@ -33,6 +33,7 @@ class Connection(threading.Thread):
 		self.serv = serv
 		self.sock = sock
 		self.addr = addr
+		self.lock = threading.Lock()
 		threading.Thread.__init__(self)
 
 	def run(self):
@@ -40,6 +41,7 @@ class Connection(threading.Thread):
 		buf = self.sock.recv(1024)
 		inp = string.split(buf)
 		res = "Wrong command! "
+		self.lock.acquire()
 		if inp[0] == "PUT":
 			if len(inp) == 3:
 				self.serv.getSbst().put(inp[1], inp[2])
@@ -63,6 +65,7 @@ class Connection(threading.Thread):
 					res += "USAGE: SET SLEEP number\n"
 			else:
 				res += "USAGE: SET SLEEP number\n"
+		self.lock.release()
 		self.sock.send(res) 
 		self.sock.close()
 
