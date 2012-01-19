@@ -36,36 +36,42 @@ class Connection(threading.Thread):
 		self.lock = threading.Lock()
 		threading.Thread.__init__(self)
 
+	def PUT(self, inp):
+		with self.lock:
+			if len(inp) == 3:
+				self.serv.getSbst().put(inp[1], inp[2])
+				return "OK\n"
+			else:
+				return "USAGE: PUT key value\n"
+
+	def GET(self, inp):
+		with self.lock:
+			if len(inp) == 2:
+				return "VALUE\n" + self.serv.getSbst().get(inp[1]) + "\n"
+			else:
+				return "USAGE: GET key\n"
+			
+	def SET(self, inp):
+		if len(inp) == 3:
+			if inp[1] == "SLEEP":
+				try:
+					self.serv.setSleepTime(int(inp[2]))
+					return "OK\n"
+				except:
+					return "USAGE: SET SLEEP number\n"
+			else:
+				return "USAGE: SET SLEEP number\n"
+		else:
+			return "USAGE: SET SLEEP number\n"
+
 	def run(self):
 		time.sleep(self.serv.getSleepTime())
 		buf = self.sock.recv(1024)
 		inp = string.split(buf)
-		res = "Wrong command! "
-		self.lock.acquire()
-		if inp[0] == "PUT":
-			if len(inp) == 3:
-				self.serv.getSbst().put(inp[1], inp[2])
-				res = "OK\n"
-			else:
-				res += "USAGE: PUT key value\n"
-		if inp[0] == "GET":
-			if len(inp) == 2:
-				res = "VALUE\n" + self.serv.getSbst().get(inp[1]) + "\n"
-			else:
-				res += "USAGE: GET key\n"
-		if inp[0] == "SET":
-			if len(inp) == 3:
-				if inp[1] == "SLEEP":
-					try:
-						self.serv.setSleepTime(int(inp[2]))
-						res = "OK\n"
-					except:
-						res += "USAGE: SET SLEEP number\n"
-				else:
-					res += "USAGE: SET SLEEP number\n"
-			else:
-				res += "USAGE: SET SLEEP number\n"
-		self.lock.release()
+		try:
+			res = getattr(self, inp[0])(inp)
+		except:
+			res = "Wrong command!\n"
 		self.sock.send(res) 
 		self.sock.close()
 
