@@ -52,17 +52,18 @@ class Connection(threading.Thread):
 				return "USAGE: GET key\n"
 			
 	def SET(self, inp):
-		if len(inp) == 3:
-			if inp[1] == "SLEEP":
-				try:
-					self.serv.setSleepTime(int(inp[2]))
-					return "OK\n"
-				except:
+		with self.lock:
+			if len(inp) == 3:
+				if inp[1] == "SLEEP":
+					try:
+						self.serv.setSleepTime(int(inp[2]))
+						return "OK\n"
+					except:
+						return "USAGE: SET SLEEP number\n"
+				else:
 					return "USAGE: SET SLEEP number\n"
 			else:
 				return "USAGE: SET SLEEP number\n"
-		else:
-			return "USAGE: SET SLEEP number\n"
 
 	def run(self):
 		time.sleep(self.serv.getSleepTime())
